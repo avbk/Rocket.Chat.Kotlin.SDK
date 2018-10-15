@@ -295,7 +295,6 @@ suspend fun RocketChatClient.getUserByUsername(username: String): User? {
     val httpUrl = requestUrl(restUrl, "users.info")
             .addQueryParameter("username", username)
             .build()
-    println("http: $httpUrl")
     val request = requestBuilderForAuthenticatedMethods(httpUrl).get().build()
     val response = handleRestCall<UserResponse>(request, UserResponse::class.java)
 
