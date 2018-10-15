@@ -8,11 +8,7 @@ import chat.rocket.common.util.CalendarISO8601Converter
 import chat.rocket.core.RocketChatClient
 import chat.rocket.core.internal.RestMultiResult
 import chat.rocket.core.internal.RestResult
-import chat.rocket.core.internal.model.Subscription
-import chat.rocket.core.internal.model.UserPayload
-import chat.rocket.core.internal.model.UserPayloadData
-import chat.rocket.core.internal.model.OwnBasicInformationPayload
-import chat.rocket.core.internal.model.OwnBasicInformationPayloadData
+import chat.rocket.core.internal.model.*
 import chat.rocket.core.model.ChatRoom
 import chat.rocket.core.model.Myself
 import chat.rocket.core.model.Removed
@@ -26,6 +22,7 @@ import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import java.io.InputStream
+import kotlin.jvm.java
 
 /**
  * Returns the current logged user information, useful to check if the Token from TokenProvider
@@ -288,4 +285,22 @@ internal suspend fun RocketChatClient.listRooms(timestamp: Long = 0): RestMultiR
             Types.newParameterizedType(List::class.java, Room::class.java),
             Types.newParameterizedType(List::class.java, Removed::class.java))
     return handleRestCall(request, type)
+}
+
+
+/**
+ * Returns the user for a given username or null if the username is unkown.
+ */
+suspend fun RocketChatClient.getUserByUsername(username: String): User? {
+    val httpUrl = requestUrl(restUrl, "users.info")
+            .addQueryParameter("username", username)
+            .build()
+    println("http: $httpUrl")
+    val request = requestBuilderForAuthenticatedMethods(httpUrl).get().build()
+    val response = handleRestCall<UserResponse>(request, UserResponse::class.java)
+
+    return if (response.success && response.user != null)
+        response.user
+    else
+        null
 }

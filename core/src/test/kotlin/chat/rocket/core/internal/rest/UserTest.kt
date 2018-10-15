@@ -278,6 +278,26 @@ class UserTest {
         }
     }
 
+    @Test
+    fun `getUserByUsername() should return user information for an existing user`() {
+        mockServer.expect()
+                .get()
+                .withPath("/api/v1/users.info?username=example")
+                .andReturn(200, USER_INFO)
+                .once()
+
+        runBlocking {
+            val user = sut.getUserByUsername("example")
+
+            assert(user != null)
+            assertThat(user?.username, isEqualTo("example"))
+            assertThat(user?.name, isEqualTo("Example User"))
+            assert(user?.status is UserStatus.Offline)
+            assertThat(user?.utcOffset, isEqualTo((0).toFloat()))
+            assert(user?.emails == null)
+        }
+    }
+
     @After
     fun shutdown() {
         mockServer.shutdown()

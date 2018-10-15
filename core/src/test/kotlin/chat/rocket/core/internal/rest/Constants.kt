@@ -125,3 +125,18 @@ const val SEND_MESSAGE_WITH_ID_OK = """
   "success": true
 }
 """
+
+const val USER_INFO = """
+{
+  "user": {
+    "_id": "nSYqWzZ4GsKTX4dyK",
+    "type": "user",
+    "status": "offline",
+    "active": true,
+    "name": "Example User",
+    "utcOffset": 0,
+    "username": "example"
+  },
+  "success": true
+}
+"""
