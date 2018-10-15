@@ -4,17 +4,8 @@ import chat.rocket.common.model.BaseResult
 import chat.rocket.common.model.RoomType
 import chat.rocket.common.model.User
 import chat.rocket.core.RocketChatClient
-import chat.rocket.core.internal.model.ChatRoomAnnouncementPayload
-import chat.rocket.core.internal.model.ChatRoomDescriptionPayload
-import chat.rocket.core.internal.model.ChatRoomJoinCodePayload
-import chat.rocket.core.internal.model.ChatRoomNamePayload
-import chat.rocket.core.internal.model.ChatRoomPayload
-import chat.rocket.core.internal.model.ChatRoomReadOnlyPayload
-import chat.rocket.core.internal.model.ChatRoomTopicPayload
-import chat.rocket.core.internal.model.ChatRoomTypePayload
-import chat.rocket.core.internal.model.ChatRoomFavoritePayload
 import chat.rocket.core.internal.RestResult
-import chat.rocket.core.internal.model.RoomIdPayload
+import chat.rocket.core.internal.model.*
 import chat.rocket.core.model.ChatRoomRole
 import chat.rocket.core.model.Message
 import chat.rocket.core.model.Room
@@ -265,6 +256,32 @@ suspend fun RocketChatClient.leaveChat(
     val body = RequestBody.create(MEDIA_TYPE_JSON, payloadBody)
 
     val url = requestUrl(restUrl, getRestApiMethodNameByRoomType(roomType, "leave")).build()
+    val request = requestBuilderForAuthenticatedMethods(url).post(body).build()
+
+    return@withContext handleRestCall<BaseResult>(request, BaseResult::class.java).success
+}
+
+/**
+ * Invite a user to a chat room.
+ *
+ * @param userId The ID of the user.
+ * @param roomId The ID of the room.
+ * @param roomType The type of the room.
+ *
+ * @return Whether the task was successful or not.
+ */
+suspend fun RocketChatClient.invite(
+        userId: String,
+        roomId: String,
+        roomType: RoomType
+): Boolean = withContext(CommonPool) {
+    val payload = UserAndRoomIdPayload(userId, roomId)
+    val adapter = moshi.adapter(UserAndRoomIdPayload::class.java)
+    val payloadBody = adapter.toJson(payload)
+
+    val body = RequestBody.create(MEDIA_TYPE_JSON, payloadBody)
+
+    val url = requestUrl(restUrl, getRestApiMethodNameByRoomType(roomType, "invite")).build()
     val request = requestBuilderForAuthenticatedMethods(url).post(body).build()
 
     return@withContext handleRestCall<BaseResult>(request, BaseResult::class.java).success

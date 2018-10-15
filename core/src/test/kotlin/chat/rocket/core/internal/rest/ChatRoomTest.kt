@@ -407,4 +407,19 @@ class ChatRoomTest {
             sut.searchMessages(roomId = "GENERAL", searchText = "test")
         }
     }
+
+    @Test
+    fun `invite() should succeed without throwing`() {
+        mockServer.expect()
+                .post()
+                .withPath("/api/v1/channels.invite")
+                .andReturn(200, SUCCESS)
+                .once()
+
+        runBlocking {
+            val result = sut.invite(userId = "someUserUuid", roomId = "someRoomUuid", roomType = roomTypeOf(RoomType.CHANNEL))
+            assertTrue(result)
+        }
+    }
+
 }
