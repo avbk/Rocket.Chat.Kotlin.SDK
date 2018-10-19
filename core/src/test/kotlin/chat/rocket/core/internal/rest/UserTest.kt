@@ -332,6 +332,61 @@ class UserTest {
         }
     }
 
+
+    @Test
+    fun `getUserById() should return user information for an existing user`() {
+        mockServer.expect()
+                .get()
+                .withPath("/api/v1/users.info?userId=example")
+                .andReturn(200, USER_INFO)
+                .once()
+
+        runBlocking {
+            val user = sut.getUserById("example")
+
+            assert(user != null)
+            assertThat(user?.username, isEqualTo("example"))
+            assertThat(user?.name, isEqualTo("Example User"))
+            assert(user?.status is UserStatus.Offline)
+            assertThat(user?.utcOffset, isEqualTo((0).toFloat()))
+            assert(user?.emails == null)
+        }
+    }
+
+    @Test
+    fun `getUserById() should return null for non existing user`() {
+        mockServer.expect()
+                .get()
+                .withPath("/api/v1/users.info?userId=nobody")
+                .andReturn(400, ERROR_INVALID_USER)
+                .once()
+
+        runBlocking {
+            val user = sut.getUserById("nobody")
+
+            assert(user == null)
+        }
+    }
+
+    @Test
+    fun `getUserById() should throw an APIException if something went wrong`() {
+        mockServer.expect()
+                .get()
+                .withPath("/api/v1/users.info?userId=nobody")
+                .andReturn(500, ERROR_GENERIC)
+                .once()
+
+        runBlocking {
+            try {
+                val user = sut.getUserById("nobody")
+                throw RuntimeException("unreachable code")
+            } catch (ex: RocketChatApiException) {
+                assertThat(ex.message, isEqualTo("Something went wrong"))
+                assertThat(ex.errorType, isEqualTo("error-generic-for-test"))
+            }
+        }
+    }
+
     @After
     fun shutdown() {
         mockServer.shutdown()

@@ -19,6 +19,7 @@ import com.squareup.moshi.Types
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.withContext
+import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -50,11 +51,11 @@ suspend fun RocketChatClient.me(): Myself {
  * @return An [User] with an updated profile.
  */
 suspend fun RocketChatClient.updateProfile(
-    userId: String,
-    email: String? = null,
-    name: String? = null,
-    password: String? = null,
-    username: String? = null
+        userId: String,
+        email: String? = null,
+        name: String? = null,
+        password: String? = null,
+        username: String? = null
 ): User {
     val payload = UserPayload(userId, UserPayloadData(name, password, username, email), null)
     val adapter = moshi.adapter(UserPayload::class.java)
@@ -80,14 +81,14 @@ suspend fun RocketChatClient.updateProfile(
  * @return An [User] with an updated profile.
  */
 suspend fun RocketChatClient.updateOwnBasicInformation(
-    email: String? = null,
-    currentPassword: String? = null,
-    newPassword: String? = null,
-    username: String? = null,
-    name: String? = null
+        email: String? = null,
+        currentPassword: String? = null,
+        newPassword: String? = null,
+        username: String? = null,
+        name: String? = null
 ): User {
     val payload =
-        OwnBasicInformationPayload(OwnBasicInformationPayloadData(email, currentPassword, newPassword, username, name))
+            OwnBasicInformationPayload(OwnBasicInformationPayloadData(email, currentPassword, newPassword, username, name))
     val adapter = moshi.adapter(OwnBasicInformationPayload::class.java)
 
     val payloadBody = adapter.toJson(payload)
@@ -136,7 +137,7 @@ suspend fun RocketChatClient.setAvatar(fileName: String, mimeType: String, input
     val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("image", fileName,
-                InputStreamRequestBody(MediaType.parse(mimeType), inputStreamProvider)
+                    InputStreamRequestBody(MediaType.parse(mimeType), inputStreamProvider)
             )
             .build()
 
@@ -191,9 +192,9 @@ suspend fun RocketChatClient.roles(): UserRole = withContext(CommonPool) {
 }
 
 internal fun RocketChatClient.combine(
-    rooms: RestMultiResult<List<Room>, List<Removed>>,
-    subscriptions: RestMultiResult<List<Subscription>, List<Removed>>,
-    filterCustom: Boolean
+        rooms: RestMultiResult<List<Room>, List<Removed>>,
+        subscriptions: RestMultiResult<List<Subscription>, List<Removed>>,
+        filterCustom: Boolean
 ): RestMultiResult<List<ChatRoom>, List<Removed>> {
     val update = combine(rooms.update, subscriptions.update, filterCustom)
     val remove = combineRemoved(rooms.remove, subscriptions.remove, filterCustom)
@@ -293,13 +294,27 @@ internal suspend fun RocketChatClient.listRooms(timestamp: Long = 0): RestMultiR
  * Returns the user for a given username.
  *
  * @param username the username to be looked up
- * @return the corresponding user or null if the username is unkown
+ * @return the corresponding [User] or null if the username is unkown
  * @throws RocketChatApiException if anything goes wrong calling the API
  */
-suspend fun RocketChatClient.getUserByUsername(username: String): User? {
-    val httpUrl = requestUrl(restUrl, "users.info")
-            .addQueryParameter("username", username)
-            .build()
+suspend fun RocketChatClient.getUserByUsername(username: String) =
+        getUser { builder -> builder.addQueryParameter("username", username) }
+
+/**
+ * Returns the user for a given user id.
+ *
+ * @param username the username to be looked up
+ * @return the corresponding [User] or null if the userId is unkown
+ * @throws RocketChatApiException if anything goes wrong calling the API
+ */
+suspend fun RocketChatClient.getUserById(id: String) =
+        getUser { builder -> builder.addQueryParameter("userId", id) }
+
+
+private suspend fun RocketChatClient.getUser(builder: (HttpUrl.Builder) -> Unit): User? {
+    val userInfoUrlBuilder = requestUrl(restUrl, "users.info")
+    builder.invoke(userInfoUrlBuilder)
+    val httpUrl = userInfoUrlBuilder.build()
     val request = requestBuilderForAuthenticatedMethods(httpUrl).get().build()
 
     val responseType = Types.newParameterizedType(RestResult::class.java, User::class.java)
