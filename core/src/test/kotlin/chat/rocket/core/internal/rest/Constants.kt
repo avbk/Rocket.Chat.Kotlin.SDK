@@ -140,3 +140,19 @@ const val USER_INFO = """
   "success": true
 }
 """
+
+const val ERROR_INVALID_USER = """
+{
+    "success": false,
+    "error": "The required \"userId\" or \"username\" param provided does not match any users [error-invalid-user]",
+    "errorType": "error-invalid-user"
+}
+"""
+
+const val ERROR_GENERIC = """
+{
+    "success": false,
+    "error": "Something went wrong",
+    "errorType": "error-generic-for-test"
+}
+"""

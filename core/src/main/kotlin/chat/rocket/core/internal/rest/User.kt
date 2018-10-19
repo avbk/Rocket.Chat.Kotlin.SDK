@@ -1,5 +1,6 @@
 package chat.rocket.core.internal.rest
 
+import chat.rocket.common.RocketChatApiException
 import chat.rocket.common.RocketChatException
 import chat.rocket.common.model.BaseResult
 import chat.rocket.common.model.RoomType
@@ -289,17 +290,26 @@ internal suspend fun RocketChatClient.listRooms(timestamp: Long = 0): RestMultiR
 
 
 /**
- * Returns the user for a given username or null if the username is unkown.
+ * Returns the user for a given username.
+ *
+ * @param username the username to be looked up
+ * @return the corresponding user or null if the username is unkown
+ * @throws RocketChatApiException if anything goes wrong calling the API
  */
 suspend fun RocketChatClient.getUserByUsername(username: String): User? {
     val httpUrl = requestUrl(restUrl, "users.info")
             .addQueryParameter("username", username)
             .build()
     val request = requestBuilderForAuthenticatedMethods(httpUrl).get().build()
-    val response = handleRestCall<UserResponse>(request, UserResponse::class.java)
 
-    return if (response.success && response.user != null)
-        response.user
-    else
-        null
+    val responseType = Types.newParameterizedType(RestResult::class.java, User::class.java)
+    try {
+        val response = handleRestCall<RestResult<User>>(request, responseType)
+        return response.result()
+    } catch (ex: RocketChatApiException) {
+        if (ex.errorType == "error-invalid-user")
+            return null
+        else
+            throw ex
+    }
 }

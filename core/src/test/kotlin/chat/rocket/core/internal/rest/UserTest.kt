@@ -298,6 +298,40 @@ class UserTest {
         }
     }
 
+    @Test
+    fun `getUserByUsername() should return null for non existing user`() {
+        mockServer.expect()
+                .get()
+                .withPath("/api/v1/users.info?username=nobody")
+                .andReturn(400, ERROR_INVALID_USER)
+                .once()
+
+        runBlocking {
+            val user = sut.getUserByUsername("nobody")
+
+            assert(user == null)
+        }
+    }
+
+    @Test
+    fun `getUserByUsername() should throw an APIException if something went wrong`() {
+        mockServer.expect()
+                .get()
+                .withPath("/api/v1/users.info?username=nobody")
+                .andReturn(500, ERROR_GENERIC)
+                .once()
+
+        runBlocking {
+            try {
+                val user = sut.getUserByUsername("nobody")
+                throw RuntimeException("unreachable code")
+            } catch (ex: RocketChatApiException) {
+                assertThat(ex.message, isEqualTo("Something went wrong"))
+                assertThat(ex.errorType, isEqualTo("error-generic-for-test"))
+            }
+        }
+    }
+
     @After
     fun shutdown() {
         mockServer.shutdown()
