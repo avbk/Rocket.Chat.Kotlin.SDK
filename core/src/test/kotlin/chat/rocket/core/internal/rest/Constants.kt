@@ -156,3 +156,11 @@ const val ERROR_GENERIC = """
     "errorType": "error-generic-for-test"
 }
 """
+
+const val ERROR_INVALID_ROOM = """
+{
+    "success": false,
+    "error": "The required \"roomId\" or \"roomName\" param provided does not match any channel [error-room-not-found]",
+    "errorType": "error-room-not-found"
+}
+"""

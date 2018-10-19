@@ -1,5 +1,6 @@
 package chat.rocket.core.internal.rest
 
+import chat.rocket.common.RocketChatApiException
 import chat.rocket.common.RocketChatException
 import chat.rocket.common.model.RoomType
 import chat.rocket.common.model.Token
@@ -417,9 +418,36 @@ class ChatRoomTest {
                 .once()
 
         runBlocking {
-            val result = sut.invite(userId = "someUserUuid", roomId = "someRoomUuid", roomType = roomTypeOf(RoomType.CHANNEL))
-            assertTrue(result)
+            sut.invite(userId = "someUserUuid", roomId = "someRoomUuid", roomType = roomTypeOf(RoomType.CHANNEL))
         }
     }
+
+    @Test(expected = RocketChatApiException::class)
+    fun `invite() should throw if room does not exist`() {
+        mockServer.expect()
+                .post()
+                .withPath("/api/v1/channels.invite")
+                .andReturn(400, ERROR_INVALID_ROOM)
+                .once()
+
+        runBlocking {
+            sut.invite(userId = "someUserUuid", roomId = "someRoomUuid", roomType = roomTypeOf(RoomType.CHANNEL))
+        }
+    }
+
+    @Test(expected = RocketChatApiException::class)
+    fun `invite() should throw if user does not exist`() {
+        mockServer.expect()
+                .post()
+                .withPath("/api/v1/channels.invite")
+                .andReturn(400, ERROR_INVALID_USER)
+                .once()
+
+        runBlocking {
+            sut.invite(userId = "someUserUuid", roomId = "someRoomUuid", roomType = roomTypeOf(RoomType.CHANNEL))
+        }
+    }
+
+
 
 }

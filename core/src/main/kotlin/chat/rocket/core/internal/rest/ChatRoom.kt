@@ -1,5 +1,6 @@
 package chat.rocket.core.internal.rest
 
+import chat.rocket.common.RocketChatApiException
 import chat.rocket.common.model.BaseResult
 import chat.rocket.common.model.RoomType
 import chat.rocket.common.model.User
@@ -269,6 +270,7 @@ suspend fun RocketChatClient.leaveChat(
  * @param roomType The type of the room.
  *
  * @return Whether the task was successful or not.
+ * @throws RocketChatApiException if user oder room are not known or something else went wrong
  */
 suspend fun RocketChatClient.invite(
         userId: String,

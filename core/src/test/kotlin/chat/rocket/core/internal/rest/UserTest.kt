@@ -323,7 +323,7 @@ class UserTest {
 
         runBlocking {
             try {
-                val user = sut.getUserByUsername("nobody")
+                sut.getUserByUsername("nobody")
                 throw RuntimeException("unreachable code")
             } catch (ex: RocketChatApiException) {
                 assertThat(ex.message, isEqualTo("Something went wrong"))
@@ -378,7 +378,7 @@ class UserTest {
 
         runBlocking {
             try {
-                val user = sut.getUserById("nobody")
+                sut.getUserById("nobody")
                 throw RuntimeException("unreachable code")
             } catch (ex: RocketChatApiException) {
                 assertThat(ex.message, isEqualTo("Something went wrong"))
