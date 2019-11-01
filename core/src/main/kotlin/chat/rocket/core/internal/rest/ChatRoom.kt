@@ -6,20 +6,7 @@ import chat.rocket.common.model.RoomType
 import chat.rocket.common.model.User
 import chat.rocket.core.RocketChatClient
 import chat.rocket.core.internal.RestResult
-import chat.rocket.core.internal.model.ChatRoomAnnouncementPayload
-import chat.rocket.core.internal.model.ChatRoomDescriptionPayload
-import chat.rocket.core.internal.model.ChatRoomFavoritePayload
-import chat.rocket.core.internal.model.ChatRoomInvitePayload
-import chat.rocket.core.internal.model.ChatRoomJoinCodePayload
-import chat.rocket.core.internal.model.ChatRoomKickPayload
-import chat.rocket.core.internal.model.ChatRoomNamePayload
-import chat.rocket.core.internal.model.ChatRoomPayload
-import chat.rocket.core.internal.model.ChatRoomReadOnlyPayload
-import chat.rocket.core.internal.model.ChatRoomTopicPayload
-import chat.rocket.core.internal.model.ChatRoomTypePayload
-import chat.rocket.core.internal.model.ChatRoomUnreadPayload
-import chat.rocket.core.internal.model.ChatRoomUserIgnorePayload
-import chat.rocket.core.internal.model.RoomIdPayload
+import chat.rocket.core.internal.model.*
 import chat.rocket.core.model.ChatRoomRole
 import chat.rocket.core.model.Message
 import chat.rocket.core.model.PagedResult
@@ -358,7 +345,7 @@ suspend fun RocketChatClient.invite(
         userId: String,
         roomId: String,
         roomType: RoomType
-): Boolean = withContext(CommonPool) {
+): Boolean = withContext(Dispatchers.IO) {
     val payload = UserAndRoomIdPayload(userId, roomId)
     val adapter = moshi.adapter(UserAndRoomIdPayload::class.java)
     val payloadBody = adapter.toJson(payload)
