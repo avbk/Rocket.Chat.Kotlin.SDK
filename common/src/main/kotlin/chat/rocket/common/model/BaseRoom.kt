@@ -5,7 +5,7 @@ import com.squareup.moshi.Json
 
 interface BaseRoom {
     val id: String
-    val type: RoomType
+    val type: RoomType?
     val fullName: String?
     val user: SimpleUser?
     val readonly: Boolean?
@@ -19,6 +19,10 @@ sealed class RoomType {
     @Json(name = DIRECT_MESSAGE) class DirectMessage : RoomType()
     @Json(name = LIVECHAT) class LiveChat : RoomType()
     class Custom(val rawType: String) : RoomType()
+
+    override fun equals(other: Any?): Boolean {
+        return other != null && other is RoomType && other.toString() == toString()
+    }
 
     override fun toString(): String {
         return when (this) {

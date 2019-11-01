@@ -5,9 +5,9 @@ import chat.rocket.core.internal.realtime.socket.Socket
 import chat.rocket.core.internal.realtime.socket.model.StreamMessage
 import chat.rocket.core.internal.realtime.socket.model.Type
 import chat.rocket.core.model.Room
-import kotlinx.coroutines.experimental.launch
-import org.json.JSONObject
 import java.security.InvalidParameterException
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 internal const val STREAM_NOTIFY_USER = "stream-notify-user"
 private const val STREAM_ROOMS_CHANGED = "rooms-changed"
@@ -43,9 +43,9 @@ private fun Socket.processRoomStream(state: String, data: JSONObject) {
         if (parentJob == null || !parentJob!!.isActive) {
             logger.debug { "Parent job: $parentJob" }
         }
-        launch(parent = parentJob) {
-            if (roomsChannel.isFull || roomsChannel.isClosedForSend) {
-                logger.debug { "Rooms channel is in trouble... $roomsChannel - full ${roomsChannel.isFull} - closedForSend ${roomsChannel.isClosedForSend}" }
+        launch(parentJob) {
+            if (roomsChannel.isClosedForSend) {
+                logger.debug { "Rooms channel is in trouble... $roomsChannel - closedForSend ${roomsChannel.isClosedForSend}" }
             }
             roomsChannel.send(StreamMessage(getMessageType(state), room))
         }
@@ -66,9 +66,7 @@ private fun Socket.processSubscriptionStream(state: String, data: JSONObject) {
     }
 
     subscription?.apply {
-        launch(parent = parentJob) {
-            subscriptionsChannel.send(StreamMessage(getMessageType(state), subscription))
-        }
+        launch(parentJob) { subscriptionsChannel.send(StreamMessage(getMessageType(state), subscription)) }
     }
 }
 

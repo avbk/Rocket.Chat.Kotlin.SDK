@@ -4,12 +4,15 @@ import chat.rocket.common.RocketChatAuthException
 import chat.rocket.common.RocketChatException
 import chat.rocket.common.model.RoomType
 import chat.rocket.common.model.Token
+import chat.rocket.common.model.roomTypeOf
 import chat.rocket.common.util.PlatformLogger
 import chat.rocket.core.RocketChatClient
 import chat.rocket.core.TokenRepository
+import chat.rocket.core.createRocketChatClient
 import io.fabric8.mockwebserver.DefaultMockServer
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import org.hamcrest.CoreMatchers.`is` as isEqualTo
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
@@ -18,7 +21,6 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
-import org.hamcrest.CoreMatchers.`is` as isEqualTo
 
 class ChannelTest {
     private lateinit var mockServer: DefaultMockServer
@@ -35,7 +37,7 @@ class ChannelTest {
         mockServer.start()
 
         val client = OkHttpClient()
-        sut = RocketChatClient.create {
+        sut = createRocketChatClient {
             httpClient = client
             restUrl = mockServer.url("/")
             userAgent = "Rocket.Chat.Kotlin.SDK"
@@ -107,6 +109,24 @@ class ChannelTest {
                 assertThat(ex, isEqualTo(instanceOf(RocketChatAuthException::class.java)))
                 assertThat(ex.message, isEqualTo("You must be logged in to do this."))
             }
+        }
+    }
+
+    @Test
+    fun `createDirectMessage() should return true and yield no exceptions`() {
+        mockServer.expect()
+            .post()
+            .withPath("/api/v1/im.create")
+            .andReturn(200, CREATE_DM_OK)
+            .once()
+
+        runBlocking {
+            val result = sut.createDirectMessage("rocket.cat")
+            assertThat(result.id, isEqualTo("Lymsiu4Mn6xjTAan4RtMDEYc28fQ5aHpf4"))
+            assertThat(result.type, isEqualTo(roomTypeOf("d")))
+            assertThat(result.usernames.size, isEqualTo(2))
+            assertThat(result.usernames[0], isEqualTo("rocket.cat"))
+            assertThat(result.usernames[1], isEqualTo("user.test"))
         }
     }
 

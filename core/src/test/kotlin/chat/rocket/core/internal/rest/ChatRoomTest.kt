@@ -8,15 +8,16 @@ import chat.rocket.common.model.roomTypeOf
 import chat.rocket.common.util.PlatformLogger
 import chat.rocket.core.RocketChatClient
 import chat.rocket.core.TokenRepository
+import chat.rocket.core.createRocketChatClient
 import io.fabric8.mockwebserver.DefaultMockServer
-import kotlinx.coroutines.experimental.runBlocking
+import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
-import kotlin.test.assertTrue
 
 class ChatRoomTest {
     private lateinit var mockServer: DefaultMockServer
@@ -36,7 +37,7 @@ class ChatRoomTest {
         mockServer.start()
 
         val client = OkHttpClient()
-        sut = RocketChatClient.create {
+        sut = createRocketChatClient {
             httpClient = client
             restUrl = mockServer.url("/")
             userAgent = "Rocket.Chat.Kotlin.SDK"
@@ -70,6 +71,32 @@ class ChatRoomTest {
 
         runBlocking {
             sut.markAsRead(roomId = "GENERAL")
+        }
+    }
+
+    @Test
+    fun `markAsUnread() should succeed without throwing`() {
+        mockServer.expect()
+            .post()
+            .withPath("/api/v1/subscriptions.unread")
+            .andReturn(200, SUCCESS)
+            .once()
+
+        runBlocking {
+            sut.markAsUnread(roomId = "GENERAL")
+        }
+    }
+
+    @Test(expected = RocketChatException::class)
+    fun `markAsUnread() should fail with RocketChatAuthException if not logged in`() {
+        mockServer.expect()
+            .post()
+            .withPath("/api/v1/subscriptions.unread")
+            .andReturn(401, MUST_BE_LOGGED_ERROR)
+            .once()
+
+        runBlocking {
+            sut.markAsUnread(roomId = "GENERAL")
         }
     }
 
@@ -129,6 +156,20 @@ class ChatRoomTest {
     }
 
     @Test
+    fun `invite() should succeed without throwing`() {
+        mockServer.expect()
+            .post()
+            .withPath("/api/v1/channels.invite")
+            .andReturn(200, SUCCESS)
+            .once()
+
+        runBlocking {
+            val result = sut.invite(roomId = "GENERAL", roomType = roomTypeOf(RoomType.CHANNEL), userId = "userId")
+            assertTrue(result)
+        }
+    }
+
+    @Test
     fun `joinChat() should succeed without throwing`() {
         mockServer.expect()
             .post()
@@ -138,6 +179,20 @@ class ChatRoomTest {
 
         runBlocking {
             val result = sut.joinChat(roomId = "GENERAL")
+            assertTrue(result)
+        }
+    }
+
+    @Test
+    fun `kick() should succeed without throwing`() {
+        mockServer.expect()
+            .post()
+            .withPath("/api/v1/channels.kick")
+            .andReturn(200, SUCCESS)
+            .once()
+
+        runBlocking {
+            val result = sut.kick(roomId = "GENERAL", roomType = roomTypeOf(RoomType.CHANNEL), userId = "userId")
             assertTrue(result)
         }
     }
